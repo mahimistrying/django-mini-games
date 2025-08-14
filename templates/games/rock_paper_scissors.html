@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Rock Paper Scissors{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="game-area">
+            <h1 class="text-center mb-4">✂️ Rock Paper Scissors</h1>
+            
+            <div class="text-center mb-4">
+                <div class="score-display">
+                    <div class="row">
+                        <div class="col-4">Player: <span id="player-score">0</span></div>
+                        <div class="col-4">Ties: <span id="ties">0</span></div>
+                        <div class="col-4">Computer: <span id="computer-score">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <div id="game-result" class="alert alert-info" style="display: none;"></div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-6 text-center">
+                    <h5>Your Choice</h5>
+                    <div id="player-choice" class="display-4">❓</div>
+                </div>
+                <div class="col-6 text-center">
+                    <h5>Computer Choice</h5>
+                    <div id="computer-choice" class="display-4">❓</div>
+                </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <h5>Choose your weapon:</h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary btn-lg mx-2" onclick="playGame('rock')">
+                        🪨 Rock
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-lg mx-2" onclick="playGame('paper')">
+                        📄 Paper
+                    </button>
+                    <button type="button" class="btn btn-outline-warning btn-lg mx-2" onclick="playGame('scissors')">
+                        ✂️ Scissors
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button id="reset-game" class="btn btn-secondary" onclick="resetGame()">Reset Game</button>
+                <a href="{% url 'games:list' %}" class="btn btn-outline-primary">Back to Games</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let playerScore = 0;
+let computerScore = 0;
+let ties = 0;
+
+const choices = {
+    rock: { emoji: '🪨', beats: 'scissors' },
+    paper: { emoji: '📄', beats: 'rock' },
+    scissors: { emoji: '✂️', beats: 'paper' }
+};
+
+function playGame(playerChoice) {
+    const computerChoice = getComputerChoice();
+    
+    // Update display
+    document.getElementById('player-choice').textContent = choices[playerChoice].emoji;
+    document.getElementById('computer-choice').textContent = choices[computerChoice].emoji;
+    
+    // Determine winner
+    const result = determineWinner(playerChoice, computerChoice);
+    showResult(result, playerChoice, computerChoice);
+    updateScore(result);
+    
+    // Save score if user is logged in
+    {% if user.is_authenticated %}
+    saveScore();
+    {% endif %}
+}
+
+function getComputerChoice() {
+    const choiceArray = Object.keys(choices);
+    return choiceArray[Math.floor(Math.random() * choiceArray.length)];
+}
+
+function determineWinner(player, computer) {
+    if (player === computer) return 'tie';
+    if (choices[player].beats === computer) return 'win';
+    return 'lose';
+}
+
+function showResult(result, playerChoice, computerChoice) {
+    const resultDiv = document.getElementById('game-result');
+    resultDiv.style.display = 'block';
+    
+    if (result === 'win') {
+        resultDiv.className = 'alert alert-success';
+        resultDiv.textContent = `You win! ${choices[playerChoice].emoji} beats ${choices[computerChoice].emoji}`;
+    } else if (result === 'lose') {
+        resultDiv.className = 'alert alert-danger';
+        resultDiv.textContent = `You lose! ${choices[computerChoice].emoji} beats ${choices[playerChoice].emoji}`;
+    } else {
+        resultDiv.className = 'alert alert-warning';
+        resultDiv.textContent = `It's a tie! Both chose ${choices[playerChoice].emoji}`;
+    }
+}
+
+function updateScore(result) {
+    if (result === 'win') playerScore++;
+    else if (result === 'lose') computerScore++;
+    else ties++;
+    
+    document.getElementById('player-score').textContent = playerScore;
+    document.getElementById('computer-score').textContent = computerScore;
+    document.getElementById('ties').textContent = ties;
+}
+
+function saveScore() {
+    fetch('{% url "games:save_score" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            game_name: 'Rock Paper Scissors',
+            score: playerScore
+        })
+    });
+}
+
+function resetGame() {
+    playerScore = 0;
+    computerScore = 0;
+    ties = 0;
+    
+    document.getElementById('player-score').textContent = '0';
+    document.getElementById('computer-score').textContent = '0';
+    document.getElementById('ties').textContent = '0';
+    document.getElementById('player-choice').textContent = '❓';
+    document.getElementById('computer-choice').textContent = '❓';
+    document.getElementById('game-result').style.display = 'none';
+}
+</script>
+{% endblock %}

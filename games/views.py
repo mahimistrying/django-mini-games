@@ -17,6 +17,10 @@ def tic_tac_toe(request):
     game = get_object_or_404(Game, name="Tic Tac Toe")
     return render(request, 'games/tic_tac_toe.html', {'game': game})
 
+def rock_paper_scissors(request):
+    game = get_object_or_404(Game, name="Rock Paper Scissors")
+    return render(request, 'games/rock_paper_scissors.html', {'game': game})
+
 @csrf_exempt
 @login_required
 def save_game_score(request):
