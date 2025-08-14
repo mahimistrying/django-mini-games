@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+
+{% block title %}Number Guessing Game{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="game-area">
+            <h1 class="text-center mb-4">🔢 Number Guessing Game</h1>
+            
+            <div class="text-center mb-4">
+                <div class="score-display">
+                    <div class="row">
+                        <div class="col-4">Attempts: <span id="attempts">0</span></div>
+                        <div class="col-4">Best Score: <span id="best-score">--</span></div>
+                        <div class="col-4">Games Won: <span id="games-won">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <h5>I'm thinking of a number between <span id="range">1 and 100</span></h5>
+                <p class="text-muted">Can you guess it?</p>
+            </div>
+
+            <div class="text-center mb-4">
+                <div id="game-feedback" class="alert alert-info">
+                    Make your first guess!
+                </div>
+            </div>
+
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="number" id="guess-input" class="form-control form-control-lg text-center" 
+                               placeholder="Enter your guess" min="1" max="100">
+                        <button class="btn btn-primary btn-lg" onclick="makeGuess()">
+                            🎯 Guess!
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mb-4">
+                <div class="btn-group" role="group">
+                    <button class="btn btn-outline-info" onclick="setDifficulty(1, 10)">Easy (1-10)</button>
+                    <button class="btn btn-outline-warning" onclick="setDifficulty(1, 50)">Medium (1-50)</button>
+                    <button class="btn btn-outline-danger" onclick="setDifficulty(1, 100)">Hard (1-100)</button>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button class="btn btn-secondary" onclick="newGame()">New Game</button>
+                <button class="btn btn-info" onclick="getHint()">💡 Hint</button>
+                <a href="{% url 'games:list' %}" class="btn btn-outline-primary">Back to Games</a>
+            </div>
+
+            <div id="guess-history" class="mt-4" style="display: none;">
+                <h6>Your Guesses:</h6>
+                <div id="history-list" class="d-flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let secretNumber;
+let attempts;
+let gamesWon = 0;
+let bestScore = null;
+let minRange = 1;
+let maxRange = 100;
+let guessHistory = [];
+let hintsUsed = 0;
+
+function initGame() {
+    newGame();
+    document.getElementById('guess-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') makeGuess();
+    });
+}
+
+function newGame() {
+    secretNumber = Math.floor(Math.random() * (maxRange - minRange + 1)) + minRange;
+    attempts = 0;
+    hintsUsed = 0;
+    guessHistory = [];
+    
+    document.getElementById('attempts').textContent = '0';
+    document.getElementById('range').textContent = `${minRange} and ${maxRange}`;
+    document.getElementById('guess-input').value = '';
+    document.getElementById('guess-input').min = minRange;
+    document.getElementById('guess-input').max = maxRange;
+    document.getElementById('game-feedback').className = 'alert alert-info';
+    document.getElementById('game-feedback').textContent = 'Make your first guess!';
+    document.getElementById('guess-history').style.display = 'none';
+    document.getElementById('history-list').innerHTML = '';
+}
+
+function makeGuess() {
+    const guessInput = document.getElementById('guess-input');
+    const guess = parseInt(guessInput.value);
+    
+    if (isNaN(guess) || guess < minRange || guess > maxRange) {
+        showFeedback(`Please enter a number between ${minRange} and ${maxRange}`, 'warning');
+        return;
+    }
+    
+    attempts++;
+    guessHistory.push(guess);
+    document.getElementById('attempts').textContent = attempts;
+    updateGuessHistory();
+    
+    if (guess === secretNumber) {
+        gameWon();
+    } else if (guess < secretNumber) {
+        showFeedback(`📈 Too low! Try a higher number.`, 'warning');
+    } else {
+        showFeedback(`📉 Too high! Try a lower number.`, 'warning');
+    }
+    
+    guessInput.value = '';
+}
+
+function gameWon() {
+    gamesWon++;
+    document.getElementById('games-won').textContent = gamesWon;
+    
+    if (bestScore === null || attempts < bestScore) {
+        bestScore = attempts;
+        document.getElementById('best-score').textContent = bestScore;
+        showFeedback(`🎉 Correct! You got it in ${attempts} attempts! NEW BEST SCORE! 🏆`, 'success');
+    } else {
+        showFeedback(`🎉 Correct! You got it in ${attempts} attempts!`, 'success');
+    }
+    
+    // Calculate score (lower attempts = higher score)
+    const score = Math.max(1, Math.round(100 - (attempts * 5) - (hintsUsed * 10)));
+    
+    {% if user.is_authenticated %}
+    saveScore(score);
+    {% endif %}
+    
+    setTimeout(() => {
+        if (confirm('Play again?')) {
+            newGame();
+        }
+    }, 2000);
+}
+
+function showFeedback(message, type) {
+    const feedback = document.getElementById('game-feedback');
+    feedback.className = `alert alert-${type}`;
+    feedback.textContent = message;
+}
+
+function setDifficulty(min, max) {
+    minRange = min;
+    maxRange = max;
+    newGame();
+    showFeedback(`Difficulty changed to ${min}-${max}. New game started!`, 'info');
+}
+
+function getHint() {
+    if (attempts === 0) {
+        showFeedback('Make at least one guess before getting a hint!', 'warning');
+        return;
+    }
+    
+    hintsUsed++;
+    const difference = Math.abs(guessHistory[guessHistory.length - 1] - secretNumber);
+    
+    let hintMessage;
+    if (difference <= 5) {
+        hintMessage = '🔥 You\'re very close!';
+    } else if (difference <= 15) {
+        hintMessage = '🌡️ You\'re getting warm!';
+    } else if (difference <= 30) {
+        hintMessage = '❄️ You\'re cold!';
+    } else {
+        hintMessage = '🧊 You\'re freezing!';
+    }
+    
+    showFeedback(hintMessage, 'info');
+}
+
+function updateGuessHistory() {
+    const historyDiv = document.getElementById('guess-history');
+    const historyList = document.getElementById('history-list');
+    
+    if (guessHistory.length > 0) {
+        historyDiv.style.display = 'block';
+        historyList.innerHTML = guessHistory.map(guess => 
+            `<span class="badge bg-secondary">${guess}</span>`
+        ).join('');
+    }
+}
+
+function saveScore(score) {
+    fetch('{% url "games:save_score" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            game_name: 'Number Guessing Game',
+            score: score
+        })
+    });
+}
+
+// Initialize game when page loads
+document.addEventListener('DOMContentLoaded', initGame);
+</script>
+{% endblock %}

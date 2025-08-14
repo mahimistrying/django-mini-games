@@ -21,6 +21,10 @@ def rock_paper_scissors(request):
     game = get_object_or_404(Game, name="Rock Paper Scissors")
     return render(request, 'games/rock_paper_scissors.html', {'game': game})
 
+def number_guessing(request):
+    game = get_object_or_404(Game, name="Number Guessing Game")
+    return render(request, 'games/number_guessing.html', {'game': game})
+
 @csrf_exempt
 @login_required
 def save_game_score(request):
