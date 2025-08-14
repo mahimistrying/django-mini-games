@@ -1,0 +1,71 @@
+/* Main Styles */
+body {
+    background-color: #f8f9fa;
+}
+
+.game-card {
+    transition: transform 0.2s;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.btn-game {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+    padding: 10px 30px;
+    border-radius: 25px;
+    color: white;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-game:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,123,255,0.4);
+}
+
+.game-area {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 20px 0;
+}
+
+/* Game specific styles */
+.tic-tac-toe-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+.tic-tac-toe-cell {
+    width: 80px;
+    height: 80px;
+    border: 2px solid #333;
+    background: white;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tic-tac-toe-cell:hover {
+    background: #f0f0f0;
+}
+
+.score-display {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin: 20px 0;
+}
