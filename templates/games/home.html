@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Mini Games - Home{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center">
+        <h1 class="display-4 mb-4">🎮 Welcome to Mini Games</h1>
+        <p class="lead">Choose from our collection of fun browser-based games!</p>
+    </div>
+</div>
+
+<div class="row mt-5">
+    {% for game in games %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card game-card h-100">
+            <div class="card-body text-center">
+                <h5 class="card-title">{{ game.name }}</h5>
+                <p class="card-text">{{ game.description }}</p>
+                <a href="{% url 'games:tic_tac_toe' %}" class="btn btn-game">Play Now</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center">
+        <p class="lead">No games available at the moment. Check back soon!</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-12 text-center">
+        <h3>Features</h3>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>🎯 Score Tracking</h5>
+                        <p>Keep track of your best scores and compete with friends!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>📱 Responsive Design</h5>
+                        <p>Play on any device - desktop, tablet, or mobile!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5>🆓 Free to Play</h5>
+                        <p>All games are completely free with no hidden costs!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
