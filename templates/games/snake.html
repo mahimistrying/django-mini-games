@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+
+{% block title %}Snake{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="game-area">
+            <h1 class="text-center mb-4">🐍 Snake</h1>
+            
+            <div class="text-center mb-3">
+                <div class="score-display">
+                    <span id="score">Score: <strong>0</strong></span>
+                </div>
+                <div class="mt-2">
+                    <span id="game-status">Use arrow keys to move! 🎮</span>
+                </div>
+            </div>
+
+            <div class="text-center mb-3">
+                <canvas id="gameCanvas" width="400" height="400" style="border: 2px solid #333; background-color: #000;"></canvas>
+            </div>
+
+            <div class="text-center mt-4">
+                <button id="start-game" class="btn btn-success">Start Game</button>
+                <button id="pause-game" class="btn btn-warning" disabled>Pause</button>
+                <button id="reset-game" class="btn btn-secondary">Reset</button>
+                <a href="{% url 'games:list' %}" class="btn btn-outline-primary">Back to Games</a>
+            </div>
+
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    Controls: Use arrow keys ← → ↑ ↓ to move the snake
+                </small>
+            </div>
+
+            {% if user.is_authenticated %}
+            <div class="text-center mt-3">
+                <small class="text-muted">Your high scores are automatically saved!</small>
+            </div>
+            {% else %}
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <a href="{% url 'accounts:login' %}">Login</a> to save your scores!
+                </small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class SnakeGame {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.gridSize = 20;
+        this.tileCount = this.canvas.width / this.gridSize;
+        
+        this.snake = [
+            {x: 10, y: 10}
+        ];
+        this.food = {};
+        this.dx = 0;
+        this.dy = 0;
+        this.score = 0;
+        this.gameRunning = false;
+        this.gamePaused = false;
+        
+        this.initializeGame();
+    }
+
+    initializeGame() {
+        this.generateFood();
+        this.drawGame();
+        
+        document.getElementById('start-game').addEventListener('click', () => this.startGame());
+        document.getElementById('pause-game').addEventListener('click', () => this.togglePause());
+        document.getElementById('reset-game').addEventListener('click', () => this.resetGame());
+        
+        document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+    }
+
+    startGame() {
+        if (!this.gameRunning) {
+            this.gameRunning = true;
+            document.getElementById('start-game').disabled = true;
+            document.getElementById('pause-game').disabled = false;
+            document.getElementById('game-status').textContent = 'Game in progress! 🎮';
+            this.gameLoop();
+        }
+    }
+
+    togglePause() {
+        if (this.gameRunning) {
+            this.gamePaused = !this.gamePaused;
+            const pauseBtn = document.getElementById('pause-game');
+            const statusElement = document.getElementById('game-status');
+            
+            if (this.gamePaused) {
+                pauseBtn.textContent = 'Resume';
+                statusElement.textContent = 'Game paused ⏸️';
+            } else {
+                pauseBtn.textContent = 'Pause';
+                statusElement.textContent = 'Game in progress! 🎮';
+            }
+        }
+    }
+
+    resetGame() {
+        this.snake = [{x: 10, y: 10}];
+        this.dx = 0;
+        this.dy = 0;
+        this.score = 0;
+        this.gameRunning = false;
+        this.gamePaused = false;
+        
+        document.getElementById('start-game').disabled = false;
+        document.getElementById('pause-game').disabled = true;
+        document.getElementById('pause-game').textContent = 'Pause';
+        document.getElementById('game-status').textContent = 'Use arrow keys to move! 🎮';
+        
+        this.updateScore();
+        this.generateFood();
+        this.drawGame();
+    }
+
+    handleKeyPress(e) {
+        if (!this.gameRunning || this.gamePaused) return;
+
+        const LEFT_KEY = 37;
+        const RIGHT_KEY = 39;
+        const UP_KEY = 38;
+        const DOWN_KEY = 40;
+
+        const keyPressed = e.keyCode;
+        const goingUp = this.dy === -1;
+        const goingDown = this.dy === 1;
+        const goingRight = this.dx === 1;
+        const goingLeft = this.dx === -1;
+
+        if (keyPressed === LEFT_KEY && !goingRight) {
+            this.dx = -1;
+            this.dy = 0;
+        }
+        if (keyPressed === UP_KEY && !goingDown) {
+            this.dx = 0;
+            this.dy = -1;
+        }
+        if (keyPressed === RIGHT_KEY && !goingLeft) {
+            this.dx = 1;
+            this.dy = 0;
+        }
+        if (keyPressed === DOWN_KEY && !goingUp) {
+            this.dx = 0;
+            this.dy = 1;
+        }
+    }
+
+    gameLoop() {
+        if (!this.gameRunning || this.gamePaused) return;
+
+        setTimeout(() => {
+            this.clearCanvas();
+            this.moveSnake();
+            this.drawFood();
+            this.drawSnake();
+            
+            if (this.checkGameOver()) {
+                this.endGame();
+                return;
+            }
+            
+            this.gameLoop();
+        }, 100);
+    }
+
+    clearCanvas() {
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    moveSnake() {
+        const head = {x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy};
+        this.snake.unshift(head);
+
+        const didEatFood = this.snake[0].x === this.food.x && this.snake[0].y === this.food.y;
+        if (didEatFood) {
+            this.score += 10;
+            this.updateScore();
+            this.generateFood();
+        } else {
+            this.snake.pop();
+        }
+    }
+
+    drawSnake() {
+        this.ctx.fillStyle = '#0f0';
+        this.snake.forEach(segment => {
+            this.ctx.fillRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize - 2, this.gridSize - 2);
+        });
+    }
+
+    generateFood() {
+        this.food = {
+            x: Math.floor(Math.random() * this.tileCount),
+            y: Math.floor(Math.random() * this.tileCount)
+        };
+    }
+
+    drawFood() {
+        this.ctx.fillStyle = '#f00';
+        this.ctx.fillRect(this.food.x * this.gridSize, this.food.y * this.gridSize, this.gridSize - 2, this.gridSize - 2);
+    }
+
+    checkGameOver() {
+        // Check wall collision
+        if (this.snake[0].x < 0 || this.snake[0].x >= this.tileCount || 
+            this.snake[0].y < 0 || this.snake[0].y >= this.tileCount) {
+            return true;
+        }
+
+        // Check self collision
+        for (let i = 1; i < this.snake.length; i++) {
+            if (this.snake[0].x === this.snake[i].x && this.snake[0].y === this.snake[i].y) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    endGame() {
+        this.gameRunning = false;
+        document.getElementById('start-game').disabled = false;
+        document.getElementById('pause-game').disabled = true;
+        document.getElementById('game-status').textContent = `Game Over! Final Score: ${this.score} 💀`;
+        
+        this.saveScore(this.score);
+    }
+
+    updateScore() {
+        document.getElementById('score').innerHTML = `Score: <strong>${this.score}</strong>`;
+    }
+
+    drawGame() {
+        this.clearCanvas();
+        this.drawFood();
+        this.drawSnake();
+    }
+
+    saveScore(score) {
+        {% if user.is_authenticated %}
+        fetch('{% url "games:save_score" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                game_name: 'Snake',
+                score: score
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Score saved successfully');
+            }
+        })
+        .catch(error => console.error('Error saving score:', error));
+        {% endif %}
+    }
+}
+
+// Initialize the game when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    new SnakeGame();
+});
+</script>
+{% endblock %}

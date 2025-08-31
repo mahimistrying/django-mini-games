@@ -25,6 +25,10 @@ def number_guessing(request):
     game = get_object_or_404(Game, name="Number Guessing Game")
     return render(request, 'games/number_guessing.html', {'game': game})
 
+def snake(request):
+    game = get_object_or_404(Game, name="Snake")
+    return render(request, 'games/snake.html', {'game': game})
+
 @csrf_exempt
 @login_required
 def save_game_score(request):

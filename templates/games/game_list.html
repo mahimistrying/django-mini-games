@@ -17,7 +17,17 @@
                 <h5 class="card-title">{{ game.name }}</h5>
                 <p class="card-text">{{ game.description }}</p>
                 <div class="text-center">
-                    <a href="{% url 'games:tic_tac_toe' %}" class="btn btn-game">Play Now</a>
+                    {% if game.name == "Tic Tac Toe" %}
+                        <a href="{% url 'games:tic_tac_toe' %}" class="btn btn-game">Play Now</a>
+                    {% elif game.name == "Rock Paper Scissors" %}
+                        <a href="{% url 'games:rock_paper_scissors' %}" class="btn btn-game">Play Now</a>
+                    {% elif game.name == "Number Guessing Game" %}
+                        <a href="{% url 'games:number_guessing' %}" class="btn btn-game">Play Now</a>
+                    {% elif game.name == "Snake" %}
+                        <a href="{% url 'games:snake' %}" class="btn btn-game">Play Now</a>
+                    {% else %}
+                        <a href="#" class="btn btn-game disabled">Coming Soon</a>
+                    {% endif %}
                 </div>
             </div>
             <div class="card-footer text-muted">
