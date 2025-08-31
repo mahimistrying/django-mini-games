@@ -25,6 +25,8 @@
                         <a href="{% url 'games:number_guessing' %}" class="btn btn-game">Play Now</a>
                     {% elif game.name == "Snake" %}
                         <a href="{% url 'games:snake' %}" class="btn btn-game">Play Now</a>
+                    {% elif game.name == "Memory Game" %}
+                        <a href="{% url 'games:memory_game' %}" class="btn btn-game">Play Now</a>
                     {% else %}
                         <a href="#" class="btn btn-game disabled">Coming Soon</a>
                     {% endif %}

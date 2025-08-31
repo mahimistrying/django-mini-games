@@ -23,6 +23,10 @@
                     <a href="{% url 'games:rock_paper_scissors' %}" class="btn btn-game">Play Now</a>
                 {% elif game.name == "Number Guessing Game" %}
                     <a href="{% url 'games:number_guessing' %}" class="btn btn-game">Play Now</a>
+                {% elif game.name == "Snake" %}
+                    <a href="{% url 'games:snake' %}" class="btn btn-game">Play Now</a>
+                {% elif game.name == "Memory Game" %}
+                    <a href="{% url 'games:memory_game' %}" class="btn btn-game">Play Now</a>
                 {% else %}
                     <a href="{% url 'games:list' %}" class="btn btn-game">Play Now</a>
                 {% endif %}

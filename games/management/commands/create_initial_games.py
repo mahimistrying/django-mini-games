@@ -22,6 +22,10 @@ class Command(BaseCommand):
                 'name': 'Snake',
                 'description': 'Classic arcade game! Control the snake to eat food and grow longer. Don\'t hit the walls or yourself!'
             },
+            {
+                'name': 'Memory Game',
+                'description': 'Test your memory! Flip cards to find matching pairs. Complete all matches with the fewest moves possible!'
+            },
         ]
 
         for game_data in games_data:
