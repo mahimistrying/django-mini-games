@@ -1,0 +1,24 @@
+databases:
+  - name: minigames-db
+    databaseName: minigames_db
+    user: minigames_user
+    plan: free
+
+services:
+  - type: web
+    name: django-mini-games
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn minigames_website.wsgi:application"
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: DATABASE_URL
+        fromDatabase:
+          name: minigames-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        sync: false
